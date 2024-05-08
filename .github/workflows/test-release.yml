@@ -1,0 +1,70 @@
+name: Unit Test and Snapshot Release
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: true
+env:
+  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+jobs:
+  unit-tests:
+    name: Run unit tests for this service
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8.2.0
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+          cache: 'pnpm'
+          registry-url: 'https://registry.npmjs.org'
+      - uses: satackey/action-docker-layer-caching@v0.0.11
+        # Ignore the failure of a step and avoid terminating the job.
+        continue-on-error: true
+      - name: Prepare
+        run: pnpm i
+      - name: Run unit tests
+        run: pnpm test
+      - name: 'Report Coverage'
+        if: always() # Also generate the report if tests are failing
+        uses: davelosert/vitest-coverage-report-action@v2
+      - name: Publish report
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: Unit Tests
+          path: coverage/junit.xml
+          reporter: jest-junit
+          fail-on-error: false
+
+#  snapshot:
+#    needs:
+#      - unit-tests
+#    name: Snapshot Release
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Inject slug/short variables
+#        uses: rlespinasse/github-slug-action@v3.x
+#      - uses: actions/checkout@v3
+#      - uses: pnpm/action-setup@v2
+#        with:
+#          version: 8.2.0
+#      - name: Use Node.js
+#        uses: actions/setup-node@v3
+#        with:
+#          node-version: 18.x
+#          cache: 'pnpm'
+#          registry-url: 'https://registry.npmjs.org'
+#      - name: Prepare
+#        run: pnpm i
+#      - name: Publish
+#        uses: ./.github/actions/snapshot-release
+#        with:
+#          tag: ${{ env.GITHUB_HEAD_REF_SLUG }}
