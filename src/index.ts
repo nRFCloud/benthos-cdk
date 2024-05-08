@@ -1,13 +1,12 @@
-import { awaitSync } from "@kaciras/deasync";
-import { Architecture, Code, Function, FunctionProps, LayerVersion, Runtime } from "aws-cdk-lib/aws-lambda";
-import { Construct } from "constructs";
-import { randomUUID } from "crypto";
-import { mkdirSync, writeFileSync } from "fs";
-import { tmpdir } from "os";
-import { getInstall } from "./install.js";
+import {Architecture, Code, Function, FunctionProps, LayerVersion, Runtime} from "aws-cdk-lib/aws-lambda";
+import {Construct} from "constructs";
+import {randomUUID} from "crypto";
+import {mkdirSync, writeFileSync} from "fs";
+import {tmpdir} from "os";
+import {getInstallSync} from "./install.cjs";
 
 const DEFAULT_GH_REPO = "benthosdev/benthos";
-const DEFAULT_VERSION = "";
+const DEFAULT_VERSION = "4.27.0";
 const DEFAULT_ARCH = "arm64";
 
 export interface BenthoLambdaProps extends Omit<FunctionProps, "code" | "runtime" | "architecture" | "handler"> {
@@ -19,11 +18,13 @@ export interface BenthoLambdaProps extends Omit<FunctionProps, "code" | "runtime
 }
 
 export class BenthosLambda extends Function {
+
+
     private static _benthosArtifactAssetMap: Map<string, Code> = new Map<string, Code>();
     protected static getBenthosArtifactAsset(ghRepo: string, version: string, arch: string): Code {
         const id = `${ghRepo}_${version}_${arch}`.replace(/\//g, "_");
         if (!this._benthosArtifactAssetMap.has(id)) {
-            const { archivePath } = awaitSync(getInstall(ghRepo, version, arch));
+            const { archivePath } = getInstallSync(ghRepo, version, arch);
             this._benthosArtifactAssetMap.set(id, Code.fromAsset(archivePath));
         }
         return this._benthosArtifactAssetMap.get(id)!;

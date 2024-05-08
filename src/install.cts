@@ -1,12 +1,12 @@
-import { createHash } from "node:crypto";
-import { createReadStream, createWriteStream, existsSync } from "node:fs";
-import { mkdir, readFile } from "node:fs/promises";
-import { pipeline } from "node:stream/promises";
+import {createHash} from "node:crypto";
+import {createReadStream, createWriteStream, existsSync} from "node:fs";
+import {mkdir, readFile} from "node:fs/promises";
+import {pipeline} from "node:stream/promises";
+import {MessageChannel, receiveMessageOnPort, Worker} from "node:worker_threads"
 
-import { Readable } from "node:stream";
+import {Readable} from "node:stream";
 
-const _dirname = new URL(".", import.meta.url).pathname;
-export const benthosPath = `${_dirname}../benthos-runtime`;
+export const benthosPath = `${__dirname}../benthos-runtime`;
 
 export async function getInstall(
     ghRepo: string,
@@ -116,4 +116,52 @@ function buildUrl(ghRepo: string, version: string, arch: string): { archive: str
             `https://github.com/${ghRepo}/releases/download/v${version}/benthos-lambda-al2_${version}_linux_${arch}.zip`,
         checksums: `https://github.com/${ghRepo}/releases/download/v${version}/benthos_${version}_checksums.txt`,
     };
+}
+
+export function getInstallSync(ghRepo: string, version: string, arch: string) {
+    const sdkWorker = new Worker(
+        `
+const { parentPort } = require("node:worker_threads");
+const { getInstall } = require("${__filename}");
+
+parentPort.addListener("message", async ({ port, signal, ghRepo, version, arch }) => {
+  try {
+    const result = await getInstall(ghRepo, version, arch);
+    port.postMessage({ result: JSON.parse(JSON.stringify(result)) });
+  } catch (e) {
+    port.postMessage({ error: e });
+  } finally {
+    port.close();
+    Atomics.store(signal, 0, 1);
+    Atomics.notify(signal, 0);
+  }
+});
+  `,
+        { eval: true, stderr: true, stdout: true },
+    );
+    const signal = new Int32Array(new SharedArrayBuffer(4));
+
+    signal[0] = 0;
+    try {
+        const subChannel = new MessageChannel();
+        sdkWorker.postMessage({
+            signal,
+            port: subChannel.port1,
+            ghRepo,
+            version,
+            arch,
+        }, [subChannel.port1]);
+
+        Atomics.wait(signal, 0, 0);
+        const result = receiveMessageOnPort(subChannel.port2);
+        if (!result) {
+            throw new Error("No result received from worker");
+        }
+        if (result?.message?.error) {
+            throw result.message.error;
+        }
+        return result.message.result;
+    } finally {
+        sdkWorker.unref();
+    }
 }
