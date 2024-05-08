@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "module": "NodeNext",
+    "target": "es2022",
+    "strict": true,
+    "outDir": "dist/",
+    "declaration": true,
+    "skipLibCheck": true,
+    "noUnusedParameters": false,
+    "sourceMap": true,
+    "noUnusedLocals": false,
+    "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo",
+    "rootDir": "src",
+    "composite": true,
+    "types": [
+      "node",
+      "vitest/globals"
+    ],
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "experimentalDecorators": true,
+    "stripInternal": true,
+    "paths": {}
+  },
+  "include": [
+    "src/**/*",
+    "src/**/*.json"
+  ]
+}

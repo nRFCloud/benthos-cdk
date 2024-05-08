@@ -1,0 +1,75 @@
+{
+  "name": "@nrfcloud/benthos-cdk",
+  "version": "0.0.0",
+  "description": "AWS CDK constructs for serverless Benthos",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "keywords": [
+    "typescript",
+    "awscdk",
+    "cdk",
+    "aws"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "licenses": [
+    {
+      "type": "MIT"
+    }
+  ],
+  "files": [
+    "dist",
+    "!dist/__tests__",
+    "!dist/tsconfig.tsbuildinfo",
+    "package.json",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "repository": "https://github.com/nRFCloud/benthos-cdk",
+  "scripts": {
+    "prepare": "husky install",
+    "lint": "dprint check && eslint --cache .",
+    "lint:fix": "dprint fmt && eslint --cache --fix .",
+    "clean": "rm -rf dist && rm -rf tests/dist && rm -rf src/generated",
+    "compile": "tsc",
+    "test": "vitest --reporter=junit --reporter=basic --outputFile.junit=coverage/junit.xml",
+    "release": "pnpm clean && pnpm build && pnpm lint && changeset publish",
+    "build": "pnpm compile"
+  },
+  "author": "John Conley",
+  "license": "MIT",
+  "devDependencies": {
+    "@changesets/cli": "^2.27.1",
+    "@eslint/js": "^8.56.0",
+    "@types/debug": "^4.1.12",
+    "@types/node": "^20.12.7",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "aws-cdk-lib": "^2.132.0",
+    "constructs": "^10.3.0",
+    "eslint": "^8.56.0",
+    "husky": "^8.0.3",
+    "typescript": "^5.4.5",
+    "vitest": "^0.34.6"
+  },
+  "peerDependencies": {
+    "aws-cdk-lib": ">=2.101.0",
+    "constructs": "^10.2.69"
+  },
+  "dependencies": {
+    "@types/unzipper": "^0.10.9",
+    "blobpack": "^1.2.4",
+    "debug": "^4.3.4",
+    "unzipper": "^0.11.4",
+    "yargs": "^17.7.2",
+    "@kaciras/deasync": "^1.0.4"
+  }
+}
