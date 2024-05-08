@@ -1,5 +1,11 @@
 # @nrfcloud/cdktf-aws-adaptor
 
+## 0.1.0
+
+### Minor Changes
+
+- 64ccca0: initial release
+
 ## 0.6.1
 
 ### Patch Changes
