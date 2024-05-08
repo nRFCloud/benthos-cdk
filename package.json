@@ -55,6 +55,7 @@
     "@typescript-eslint/parser": "^6.21.0",
     "aws-cdk-lib": "^2.132.0",
     "constructs": "^10.3.0",
+    "dprint": "^0.45.1",
     "eslint": "^8.56.0",
     "husky": "^8.0.3",
     "typescript": "^5.4.5",
@@ -65,11 +66,11 @@
     "constructs": "^10.2.69"
   },
   "dependencies": {
+    "@kaciras/deasync": "^1.0.4",
     "@types/unzipper": "^0.10.9",
     "blobpack": "^1.2.4",
     "debug": "^4.3.4",
     "unzipper": "^0.11.4",
-    "yargs": "^17.7.2",
-    "@kaciras/deasync": "^1.0.4"
+    "yargs": "^17.7.2"
   }
 }

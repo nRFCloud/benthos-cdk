@@ -1,15 +1,18 @@
-import {mkdir, readFile, rm} from "node:fs/promises"
-import {pipeline} from "node:stream/promises";
-import {createReadStream, createWriteStream, existsSync} from "node:fs"
-import {createHash} from "node:crypto";
+import { createHash } from "node:crypto";
+import { createReadStream, createWriteStream, existsSync } from "node:fs";
+import { mkdir, readFile } from "node:fs/promises";
+import { pipeline } from "node:stream/promises";
 
-import {Readable} from "node:stream"
+import { Readable } from "node:stream";
 
-const _dirname = new URL('.', import.meta.url).pathname;
+const _dirname = new URL(".", import.meta.url).pathname;
 export const benthosPath = `${_dirname}../benthos-runtime`;
-export const DEFAULT_GH_REPO = "benthosdev/benthos";
 
-export async function getInstall(ghRepo: string, version: string, arch: string): Promise<{archivePath: string, checksumPath: string}> {
+export async function getInstall(
+    ghRepo: string,
+    version: string,
+    arch: string,
+): Promise<{ archivePath: string; checksumPath: string }> {
     const paths = await createBenthosRuntimeDirectories(ghRepo, version, arch);
     if (await verifyChecksum(version, arch, paths)) {
         console.log(`Benthos runtime version ${version} already downloaded`);
@@ -32,47 +35,56 @@ export async function getInstall(ghRepo: string, version: string, arch: string):
 // }
 
 async function createBenthosRuntimeDirectories(ghRepo: string, version: string, arch: string): Promise<{
-    archivePath: string,
-    checksumPath: string,
+    archivePath: string;
+    checksumPath: string;
 }> {
-    const id = `${ghRepo}_${version}_${arch}`.replace(/\//g, '_');
+    const id = `${ghRepo}_${version}_${arch}`.replace(/\//g, "_");
     const path = `${benthosPath}/${id}`;
     await mkdir(path, { recursive: true });
 
     return {
         archivePath: `${path}/benthos.zip`,
-        checksumPath: `${path}/checksums.txt`
-    }
+        checksumPath: `${path}/checksums.txt`,
+    };
 }
 
-async function verifyChecksum(version: string, arch: string, paths: { archivePath: string, checksumPath: string }): Promise<boolean>  {
+async function verifyChecksum(
+    version: string,
+    arch: string,
+    paths: { archivePath: string; checksumPath: string },
+): Promise<boolean> {
     if (!existsSync(paths.archivePath) || !existsSync(paths.checksumPath)) {
         return false;
     }
 
-    const hash = createHash('sha256')
+    const hash = createHash("sha256");
     const archiveStream = createReadStream(paths.archivePath);
 
-    await pipeline(archiveStream, hash)
+    await pipeline(archiveStream, hash);
 
-    const checksum = hash.digest('hex');
+    const checksum = hash.digest("hex");
     const fileChecksums = await getChecksums(paths.checksumPath);
-    const fileChecksum =fileChecksums[`benthos-lambda-al2_${version}_linux_${arch}.zip`];
+    const fileChecksum = fileChecksums[`benthos-lambda-al2_${version}_linux_${arch}.zip`];
 
     return checksum === fileChecksum;
 }
 
 async function getChecksums(checksumPath: string) {
-    const checksumFile = await readFile(checksumPath, 'utf-8');
-    return Object.fromEntries(checksumFile.split('\n').map(line => [line.split(' ')[2], line.split(' ')[0]]));
+    const checksumFile = await readFile(checksumPath, "utf-8");
+    return Object.fromEntries(checksumFile.split("\n").map(line => [line.split(" ")[2], line.split(" ")[0]]));
 }
 
-async function get(ghRepo: string, version: string, arch: string, paths: { archivePath: string, checksumPath: string }) {
-    const { archivePath, checksumPath} = paths;
+async function get(
+    ghRepo: string,
+    version: string,
+    arch: string,
+    paths: { archivePath: string; checksumPath: string },
+) {
+    const { archivePath, checksumPath } = paths;
     const { archive: archiveUrl, checksums: checksumsUrl } = buildUrl(ghRepo, version, arch);
     const runtimeArchiveRequest = await fetch(archiveUrl, {
-        method: 'GET',
-        redirect: 'follow'
+        method: "GET",
+        redirect: "follow",
     });
 
     if (!runtimeArchiveRequest.ok) {
@@ -81,26 +93,27 @@ async function get(ghRepo: string, version: string, arch: string, paths: { archi
 
     const archiveWriteStream = createWriteStream(archivePath);
 
-    await pipeline(Readable.fromWeb(runtimeArchiveRequest.body! as any), archiveWriteStream);
+    await pipeline(
+        Readable.fromWeb(runtimeArchiveRequest.body! as import("stream/web").ReadableStream),
+        archiveWriteStream,
+    );
 
     const checksumsRequest = await fetch(checksumsUrl, {
-        method: 'GET',
-        redirect: 'follow'
+        method: "GET",
+        redirect: "follow",
     });
 
     const checksumsWriteStream = createWriteStream(checksumPath);
-    await pipeline(Readable.fromWeb(checksumsRequest.body! as any), checksumsWriteStream);
+    await pipeline(
+        Readable.fromWeb(checksumsRequest.body! as import("stream/web").ReadableStream),
+        checksumsWriteStream,
+    );
 }
 
-function buildUrl(ghRepo: string, version: string, arch: string): { archive: string, checksums: string } {
+function buildUrl(ghRepo: string, version: string, arch: string): { archive: string; checksums: string } {
     return {
-        archive: `https://github.com/${ghRepo}/releases/download/v${version}/benthos-lambda-al2_${version}_linux_${arch}.zip`,
-        checksums: `https://github.com/${ghRepo}/releases/download/v${version}/benthos_${version}_checksums.txt`
-    }
+        archive:
+            `https://github.com/${ghRepo}/releases/download/v${version}/benthos-lambda-al2_${version}_linux_${arch}.zip`,
+        checksums: `https://github.com/${ghRepo}/releases/download/v${version}/benthos_${version}_checksums.txt`,
+    };
 }
-//
-// try {
-//     await getInstall("jfrconley/benthos", "4.28.0-dev", "arm64");
-// } catch (e) {
-//     console.error(e);
-// }
