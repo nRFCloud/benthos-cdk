@@ -1,9 +1,9 @@
-import {Architecture, Code, Function, FunctionProps, LayerVersion, Runtime} from "aws-cdk-lib/aws-lambda";
-import {Construct} from "constructs";
-import {randomUUID} from "crypto";
-import {mkdirSync, writeFileSync} from "fs";
-import {tmpdir} from "os";
-import {getInstallSync} from "./install.cjs";
+import { Architecture, Code, Function, FunctionProps, LayerVersion, Runtime } from "aws-cdk-lib/aws-lambda";
+import { Construct } from "constructs";
+import { randomUUID } from "crypto";
+import { mkdirSync, writeFileSync } from "fs";
+import { tmpdir } from "os";
+import { getInstallSync } from "./install.cjs";
 
 const DEFAULT_GH_REPO = "benthosdev/benthos";
 const DEFAULT_VERSION = "4.27.0";
@@ -18,8 +18,6 @@ export interface BenthoLambdaProps extends Omit<FunctionProps, "code" | "runtime
 }
 
 export class BenthosLambda extends Function {
-
-
     private static _benthosArtifactAssetMap: Map<string, Code> = new Map<string, Code>();
     protected static getBenthosArtifactAsset(ghRepo: string, version: string, arch: string): Code {
         const id = `${ghRepo}_${version}_${arch}`.replace(/\//g, "_");
